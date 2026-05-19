@@ -2,17 +2,18 @@
 
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { ArrowLeft, User, Calendar, Save } from 'lucide-react'
+import { ArrowLeft, User, Calendar, Save, Mail, History } from 'lucide-react'
 import { useApp } from '@/lib/app-context'
 
 export function ProfileScreen() {
   const { setCurrentScreen, userProfile, setUserProfile, phone } = useApp()
   const [name, setName] = useState(userProfile.name)
   const [birthday, setBirthday] = useState(userProfile.birthday)
+  const [email, setEmail] = useState(userProfile.email || '')
   const [saved, setSaved] = useState(false)
 
   const handleSave = () => {
-    setUserProfile({ name, birthday })
+    setUserProfile({ name, birthday, email })
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)
   }
@@ -20,6 +21,23 @@ export function ProfileScreen() {
   const formatPhoneDisplay = (phoneNumber: string) => {
     if (!phoneNumber) return '+7 (XXX) XXX-XX-XX'
     return phoneNumber
+  }
+
+  // Format birthday as DD.MM.YYYY
+  const formatBirthday = (value: string) => {
+    const digits = value.replace(/\D/g, '')
+    if (digits.length === 0) return ''
+    if (digits.length <= 2) return digits
+    if (digits.length <= 4) return `${digits.slice(0, 2)}.${digits.slice(2)}`
+    return `${digits.slice(0, 2)}.${digits.slice(2, 4)}.${digits.slice(4, 8)}`
+  }
+
+  const handleBirthdayChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value
+    const digits = value.replace(/\D/g, '')
+    if (digits.length <= 8) {
+      setBirthday(formatBirthday(digits))
+    }
   }
 
   return (
@@ -90,17 +108,39 @@ export function ProfileScreen() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.4 }}
-        className="mb-6 sm:mb-8"
+        className="mb-4 sm:mb-6"
       >
         <label className="block text-xs sm:text-sm text-[#a1a1aa] mb-2">
           <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4 inline mr-2" />
           Дата рождения
         </label>
         <input
-          type="date"
+          type="text"
+          inputMode="numeric"
           value={birthday}
-          onChange={(e) => setBirthday(e.target.value)}
-          className="w-full bg-[#1a1a1a] border border-[#333] rounded-lg sm:rounded-xl px-3 sm:px-4 py-3 sm:py-4 text-sm sm:text-base text-white focus:outline-none focus:border-[#D4AF37] transition-colors [color-scheme:dark]"
+          onChange={handleBirthdayChange}
+          placeholder="ДД.ММ.ГГГГ"
+          className="w-full bg-[#1a1a1a] border border-[#333] rounded-lg sm:rounded-xl px-3 sm:px-4 py-3 sm:py-4 text-sm sm:text-base text-white placeholder-[#666] focus:outline-none focus:border-[#D4AF37] transition-colors"
+        />
+      </motion.div>
+
+      {/* Email */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.45 }}
+        className="mb-6 sm:mb-8"
+      >
+        <label className="block text-xs sm:text-sm text-[#a1a1aa] mb-2">
+          <Mail className="w-3.5 h-3.5 sm:w-4 sm:h-4 inline mr-2" />
+          Email
+        </label>
+        <input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="example@mail.com"
+          className="w-full bg-[#1a1a1a] border border-[#333] rounded-lg sm:rounded-xl px-3 sm:px-4 py-3 sm:py-4 text-sm sm:text-base text-white placeholder-[#666] focus:outline-none focus:border-[#D4AF37] transition-colors"
         />
       </motion.div>
 
@@ -115,6 +155,19 @@ export function ProfileScreen() {
       >
         <Save className="w-4 h-4 sm:w-5 sm:h-5" />
         {saved ? 'Сохранено!' : 'Сохранить'}
+      </motion.button>
+
+      {/* Order History Button */}
+      <motion.button
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.55 }}
+        whileTap={{ scale: 0.98 }}
+        onClick={() => setCurrentScreen('order-history')}
+        className="w-full bg-[#1a1a1a] text-white py-3 sm:py-4 rounded-lg sm:rounded-xl font-semibold text-sm sm:text-base border border-[#333] hover:border-[#D4AF37] transition-colors flex items-center justify-center gap-2 mb-3 sm:mb-4"
+      >
+        <History className="w-4 h-4 sm:w-5 sm:h-5" />
+        История заказов
       </motion.button>
 
       {/* Back to Menu Button */}

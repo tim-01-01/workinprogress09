@@ -1,8 +1,8 @@
 'use client'
 
-import { createContext, useContext, useState, type ReactNode } from 'react'
+import { createContext, useContext, useState, useCallback, type ReactNode } from 'react'
 
-export type Screen = 'auth-phone' | 'auth-code' | 'menu' | 'cart' | 'order-status' | 'profile'
+export type Screen = 'auth-phone' | 'auth-code' | 'menu' | 'cart' | 'order-status' | 'profile' | 'order-history' | 'terms' | 'admin'
 export type OrderType = 'dine-in' | 'takeaway'
 
 interface Order {
@@ -12,11 +12,17 @@ interface Order {
   type: OrderType
   status: 'accepted' | 'preparing' | 'ready'
   orderNumber: number
+  date?: string
+}
+
+export interface HistoryOrder extends Order {
+  date: string
 }
 
 interface UserProfile {
   name: string
   birthday: string
+  email: string
 }
 
 interface AppContextType {
@@ -32,12 +38,16 @@ interface AppContextType {
   setCurrentOrder: (order: Order | null) => void
   userProfile: UserProfile
   setUserProfile: (profile: UserProfile) => void
+  orderHistory: HistoryOrder[]
+  addToOrderHistory: (order: HistoryOrder) => void
+  isAdmin: boolean
+  setIsAdmin: (value: boolean) => void
 }
 
 // Restaurant constants
 export const RESTAURANT_PHONE = '+7(900)110-20-03'
-export const RESTAURANT_ADDRESS = 'Пр. Добролюбова 7/2'
-export const RESTAURANT_COORDS = '59.952012,30.308753' // St. Petersburg coordinates
+export const RESTAURANT_ADDRESS = 'Большой проспект П.С., 39'
+export const RESTAURANT_COORDS = '59.960275,30.303612' // St. Petersburg coordinates
 
 const AppContext = createContext<AppContextType | undefined>(undefined)
 
@@ -47,7 +57,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [orderType, setOrderType] = useState<OrderType>('dine-in')
   const [currentOrder, setCurrentOrder] = useState<Order | null>(null)
-  const [userProfile, setUserProfile] = useState<UserProfile>({ name: '', birthday: '' })
+  const [userProfile, setUserProfile] = useState<UserProfile>({ name: '', birthday: '', email: '' })
+  const [orderHistory, setOrderHistory] = useState<HistoryOrder[]>([])
+  const [isAdmin, setIsAdmin] = useState(false)
+
+  const addToOrderHistory = useCallback((order: HistoryOrder) => {
+    setOrderHistory(prev => [order, ...prev])
+  }, [])
 
   return (
     <AppContext.Provider
@@ -64,6 +80,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setCurrentOrder,
         userProfile,
         setUserProfile,
+        orderHistory,
+        addToOrderHistory,
+        isAdmin,
+        setIsAdmin,
       }}
     >
       {children}

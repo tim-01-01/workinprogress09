@@ -13,10 +13,9 @@ export function AuthPhoneScreen() {
   const [phoneValue, setPhoneValue] = useState('')
   const [error, setError] = useState('')
 
-  const formatPhone = (value: string) => {
-    const digits = value.replace(/\D/g, '')
+  const formatPhone = (digits: string) => {
     if (digits.length === 0) return ''
-    if (digits.length <= 1) return `+7 (${digits}`
+    if (digits.length === 1) return `+7`
     if (digits.length <= 4) return `+7 (${digits.slice(1)}`
     if (digits.length <= 7) return `+7 (${digits.slice(1, 4)}) ${digits.slice(4)}`
     if (digits.length <= 9) return `+7 (${digits.slice(1, 4)}) ${digits.slice(4, 7)}-${digits.slice(7)}`
@@ -25,22 +24,28 @@ export function AuthPhoneScreen() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value
-    const digits = value.replace(/\D/g, '')
+    // Extract only digits from input
+    let digits = value.replace(/\D/g, '')
     
+    // Handle empty input
     if (digits.length === 0) {
       setPhoneValue('')
       return
     }
     
-    // Ensure it starts with 7
-    let normalizedDigits = digits
-    if (!digits.startsWith('7')) {
-      normalizedDigits = '7' + digits
+    // Normalize: if starts with 8, replace with 7; if doesn't start with 7, prepend 7
+    if (digits.startsWith('8')) {
+      digits = '7' + digits.slice(1)
+    } else if (!digits.startsWith('7')) {
+      digits = '7' + digits
     }
     
-    if (normalizedDigits.length <= 11) {
-      setPhoneValue(formatPhone(normalizedDigits))
+    // Limit to 11 digits (7 + 10 digits)
+    if (digits.length > 11) {
+      digits = digits.slice(0, 11)
     }
+    
+    setPhoneValue(formatPhone(digits))
     setError('')
   }
 
@@ -135,7 +140,13 @@ export function AuthPhoneScreen() {
         className="text-center text-[#666] text-xs sm:text-sm mt-6 sm:mt-8"
       >
         Нажимая кнопку, вы соглашаетесь с{' '}
-        <span className="text-[#D4AF37]">условиями использования</span>
+        <button 
+          type="button"
+          onClick={() => setCurrentScreen('terms')}
+          className="text-[#D4AF37] hover:underline"
+        >
+          условиями использования
+        </button>
       </motion.p>
     </div>
   )

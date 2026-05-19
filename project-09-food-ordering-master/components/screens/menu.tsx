@@ -3,27 +3,29 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { User, MapPin, Phone, Plus, Minus, ChevronRight, ChevronLeft, ShoppingBag, X } from 'lucide-react'
-import { useApp, RESTAURANT_PHONE, RESTAURANT_ADDRESS, RESTAURANT_COORDS } from '@/lib/app-context'
+import { useApp } from '@/lib/app-context'
 import { useCart } from '@/lib/cart-context'
-import { categories, menuItems, type MenuItem } from '@/lib/data'
+import { useMenu } from '@/lib/menu-context'
+import type { MenuItem } from '@/lib/data'
 import Image from 'next/image'
 
 const LOGO_URL = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Frame%202-ka88YF1wTzYyPws7x9erhGnno6h2HV.png'
 
 export function MenuScreen() {
   const { setCurrentScreen } = useApp()
-  const { addItem, removeItem, getItemQuantity, totalItems, totalPrice } = useCart()
-  const [activeCategory, setActiveCategory] = useState(categories[0].slug)
+  const { addItem, updateQuantity, getItemQuantity, totalItems, totalPrice } = useCart()
+  const { categories, menuItems, restaurantInfo, stoppedItems } = useMenu()
+  const [activeCategory, setActiveCategory] = useState(categories[0]?.slug || '')
   const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null)
   const categoryScrollRef = useRef<HTMLDivElement>(null)
   const menuContentRef = useRef<HTMLDivElement>(null)
   const categoryRefs = useRef<{ [key: string]: HTMLDivElement | null }>({})
   const isScrollingToCategory = useRef(false)
 
-  // Group menu items by category
+  // Group menu items by category (excluding stopped items)
   const groupedMenu = categories.map(category => ({
     ...category,
-    items: menuItems.filter(item => item.category === category.slug)
+    items: menuItems.filter(item => item.category === category.slug && !stoppedItems.has(item.id))
   })).filter(category => category.items.length > 0)
 
   // Scroll category tab into view
@@ -104,12 +106,12 @@ export function MenuScreen() {
 
   // Open phone dialer
   const handlePhoneClick = () => {
-    window.location.href = `tel:${RESTAURANT_PHONE.replace(/[^\d+]/g, '')}`
+    window.location.href = `tel:${restaurantInfo.phone.replace(/[^\d+]/g, '')}`
   }
 
   // Open maps
   const handleAddressClick = () => {
-    const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${RESTAURANT_COORDS}`
+    const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${restaurantInfo.coords}`
     window.open(mapsUrl, '_blank')
   }
 
@@ -137,14 +139,14 @@ export function MenuScreen() {
               className="flex items-center justify-center w-8 h-8 sm:w-auto sm:h-auto sm:gap-1 hover:text-[#D4AF37] transition-colors text-[#a1a1aa] sm:px-2 sm:py-1"
             >
               <MapPin className="w-4 h-4 sm:w-4 sm:h-4" />
-              <span className="hidden md:inline text-sm">{RESTAURANT_ADDRESS}</span>
+              <span className="hidden md:inline text-sm">{restaurantInfo.address}</span>
             </button>
             <button 
               onClick={handlePhoneClick}
               className="flex items-center justify-center w-8 h-8 sm:w-auto sm:h-auto sm:gap-1 hover:text-[#D4AF37] transition-colors text-[#a1a1aa] sm:px-2 sm:py-1"
             >
               <Phone className="w-4 h-4 sm:w-4 sm:h-4" />
-              <span className="hidden md:inline text-sm">{RESTAURANT_PHONE}</span>
+              <span className="hidden md:inline text-sm">{restaurantInfo.phone}</span>
             </button>
           </div>
 
@@ -240,7 +242,7 @@ export function MenuScreen() {
                         <div className="flex items-center gap-1 sm:gap-2 bg-white rounded-lg px-1.5 sm:px-2 py-0.5 sm:py-1 border border-[#ddd]">
                           <motion.button
                             whileTap={{ scale: 0.9 }}
-                            onClick={() => removeItem(item.id)}
+                            onClick={() => updateQuantity(item.id, quantity - 1)}
                             className="w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center text-[#D4AF37]"
                           >
                             <Minus className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -419,7 +421,7 @@ export function MenuScreen() {
                     <div className="flex items-center gap-2 sm:gap-3 bg-[#252525] rounded-xl px-3 sm:px-4 py-1.5 sm:py-2">
                       <motion.button
                         whileTap={{ scale: 0.9 }}
-                        onClick={() => removeItem(selectedItem.id)}
+                        onClick={() => updateQuantity(selectedItem.id, getItemQuantity(selectedItem.id) - 1)}
                         className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center text-[#D4AF37]"
                       >
                         <Minus className="w-5 h-5 sm:w-6 sm:h-6" />
