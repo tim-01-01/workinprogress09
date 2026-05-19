@@ -28,59 +28,26 @@ export function TermsScreen() {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="prose prose-invert max-w-none"
+        className="flex-1 flex flex-col items-center justify-center"
       >
-        <div className="bg-[#1a1a1a] rounded-xl p-4 sm:p-6 border border-[#333] space-y-4 text-sm sm:text-base text-[#a1a1aa]">
-          <section>
-            <h2 className="text-lg sm:text-xl font-bold text-white mb-3">1. Общие положения</h2>
-            <p>
-              Настоящие Условия использования регулируют порядок использования мобильного приложения 
-              MUCHACHO для заказа блюд и напитков в нашем заведении.
-            </p>
-          </section>
-
-          <section>
-            <h2 className="text-lg sm:text-xl font-bold text-white mb-3">2. Регистрация и авторизация</h2>
-            <p>
-              Для использования приложения необходимо пройти авторизацию по номеру телефона. 
-              Вы соглашаетесь предоставить достоверную информацию при регистрации.
-            </p>
-          </section>
-
-          <section>
-            <h2 className="text-lg sm:text-xl font-bold text-white mb-3">3. Заказ и оплата</h2>
-            <p>
-              При оформлении заказа вы соглашаетесь с текущими ценами, представленными в меню. 
-              Оплата производится непосредственно в заведении после получения заказа.
-            </p>
-          </section>
-
-          <section>
-            <h2 className="text-lg sm:text-xl font-bold text-white mb-3">4. Персональные данные</h2>
-            <p>
-              Мы обрабатываем ваши персональные данные (номер телефона, имя, дата рождения, email) 
-              в соответствии с законодательством РФ о защите персональных данных. 
-              Данные используются исключительно для обработки заказов и улучшения качества обслуживания.
-            </p>
-          </section>
-
-          <section>
-            <h2 className="text-lg sm:text-xl font-bold text-white mb-3">5. Ответственность</h2>
-            <p>
-              Заведение оставляет за собой право изменять меню, цены и условия обслуживания. 
-              В случае возникновения спорных ситуаций, пожалуйста, обращайтесь к администрации заведения.
-            </p>
-          </section>
-
-          <section>
-            <h2 className="text-lg sm:text-xl font-bold text-white mb-3">6. Контакты</h2>
-            <p>
-              По всем вопросам вы можете связаться с нами по телефону +7(900)110-20-03 
-              или посетить наше заведение по адресу: Большой проспект П.С., 39.
-            </p>
-          </section>
+        <div className="bg-[#1a1a1a] rounded-xl p-6 sm:p-8 border border-[#333] text-center max-w-md">
+          <p className="text-[#a1a1aa] text-sm sm:text-base leading-relaxed">
+            При использовании сервиса вы разрешаете продать вашу душу по среднерыночной стоимости
+          </p>
         </div>
       </motion.div>
+
+      {/* Back Button */}
+      <motion.button
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+        whileTap={{ scale: 0.98 }}
+        onClick={() => setCurrentScreen('auth-phone')}
+        className="w-full bg-[#D4AF37] text-black py-3 sm:py-4 rounded-xl font-semibold text-sm sm:text-base mt-6"
+      >
+        Вернуться назад
+      </motion.button>
     </div>
   )
 }

@@ -1,26 +1,26 @@
 'use client'
 
 import { useState, useRef } from 'react'
-import { motion, AnimatePresence, Reorder } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { 
   ArrowLeft, 
-  Settings, 
   Edit3, 
   Trash2, 
-  GripVertical, 
+  Equal,
   Plus, 
   X, 
   MoreVertical,
   StopCircle,
   Check,
   Image as ImageIcon,
-  Upload
+  Upload,
+  Users
 } from 'lucide-react'
 import { useApp } from '@/lib/app-context'
 import { useMenu, type RestaurantInfo } from '@/lib/menu-context'
 import type { MenuItem, Category } from '@/lib/data'
 
-type EditMode = 'none' | 'info' | 'category' | 'item'
+type EditMode = 'none' | 'info' | 'category' | 'item' | 'admins'
 
 interface EditingItem {
   type: 'category' | 'item'
@@ -28,8 +28,18 @@ interface EditingItem {
   data: Partial<MenuItem | Category>
 }
 
+const WEEKDAY_NAMES: Record<string, string> = {
+  mon: 'Понедельник',
+  tue: 'Вторник',
+  wed: 'Среда',
+  thu: 'Четверг',
+  fri: 'Пятница',
+  sat: 'Суббота',
+  sun: 'Воскресенье'
+}
+
 export function AdminScreen() {
-  const { setCurrentScreen, setIsAdmin } = useApp()
+  const { setCurrentScreen, setIsAdmin, adminPhones, addAdminPhone, removeAdminPhone } = useApp()
   const { 
     categories, 
     menuItems, 
@@ -37,12 +47,10 @@ export function AdminScreen() {
     addCategory,
     updateCategory,
     deleteCategory,
-    reorderCategories,
     addMenuItem,
     updateMenuItem,
     deleteMenuItem,
     toggleItemStop,
-    reorderMenuItems,
     updateRestaurantInfo,
     stoppedItems
   } = useMenu()
@@ -53,22 +61,14 @@ export function AdminScreen() {
   const [infoForm, setInfoForm] = useState<RestaurantInfo>(restaurantInfo)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [selectedImage, setSelectedImage] = useState<string | null>(null)
+  const [newAdminPhone, setNewAdminPhone] = useState('')
+  const [draggedItem, setDraggedItem] = useState<{ type: 'category' | 'item', id: string } | null>(null)
 
   // Group items by category for display
   const groupedItems = categories.map(cat => ({
     category: cat,
     items: menuItems.filter(item => item.category === cat.slug)
   }))
-
-  // Create flat list for reordering
-  type ListItem = { type: 'category'; data: Category } | { type: 'item'; data: MenuItem }
-  const flatList: ListItem[] = []
-  groupedItems.forEach(group => {
-    flatList.push({ type: 'category', data: group.category })
-    group.items.forEach(item => {
-      flatList.push({ type: 'item', data: item })
-    })
-  })
 
   const handleBackToMenu = () => {
     setIsAdmin(false)
@@ -202,10 +202,88 @@ export function AdminScreen() {
     }
   }
 
+  const handleAddAdmin = () => {
+    if (newAdminPhone.trim()) {
+      addAdminPhone(newAdminPhone.trim())
+      setNewAdminPhone('')
+    }
+  }
+
+  // Drag handlers
+  const handleDragStart = (type: 'category' | 'item', id: string) => {
+    setDraggedItem({ type, id })
+  }
+
+  const handleDragEnd = () => {
+    setDraggedItem(null)
+  }
+
+  // Render admins edit screen
+  if (editMode === 'admins') {
+    return (
+      <div className="min-h-screen bg-[#0a0a0a] px-4 py-6">
+        <div className="max-w-2xl mx-auto">
+          <div className="flex items-center gap-3 mb-6">
+            <button
+              onClick={() => setEditMode('none')}
+              className="w-10 h-10 flex items-center justify-center bg-[#1a1a1a] rounded-lg border border-[#333]"
+            >
+              <ArrowLeft className="w-5 h-5 text-white" />
+            </button>
+            <h1 className="text-xl font-bold text-white">Редактировать администраторов</h1>
+          </div>
+
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm text-[#a1a1aa] mb-2">Добавить администратора</label>
+              <div className="flex gap-2">
+                <input
+                  type="tel"
+                  value={newAdminPhone}
+                  onChange={(e) => setNewAdminPhone(e.target.value)}
+                  placeholder="+7 (XXX) XXX-XX-XX"
+                  className="flex-1 bg-[#1a1a1a] border border-[#333] rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#D4AF37]"
+                />
+                <button
+                  onClick={handleAddAdmin}
+                  className="bg-[#D4AF37] text-black px-4 rounded-xl font-semibold"
+                >
+                  <Plus className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm text-[#a1a1aa] mb-2">Список администраторов</label>
+              <div className="space-y-2">
+                {adminPhones.map((phone, index) => (
+                  <div 
+                    key={index}
+                    className="flex items-center justify-between bg-[#1a1a1a] border border-[#333] rounded-xl px-4 py-3"
+                  >
+                    <span className="text-white">{phone}</span>
+                    {phone !== '+7 (999) 999-99-99' && (
+                      <button
+                        onClick={() => removeAdminPhone(phone)}
+                        className="text-red-400 hover:text-red-300"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   // Render edit info form
   if (editMode === 'info') {
     return (
-      <div className="min-h-screen bg-[#0a0a0a] px-4 py-6">
+      <div className="min-h-screen bg-[#0a0a0a] px-4 py-6 pb-24">
         <div className="max-w-2xl mx-auto">
           <div className="flex items-center gap-3 mb-6">
             <button
@@ -233,6 +311,7 @@ export function AdminScreen() {
                 type="tel"
                 value={infoForm.phone}
                 onChange={(e) => setInfoForm({ ...infoForm, phone: e.target.value })}
+                placeholder="+7(XXX) XXX-XX-XX"
                 className="w-full bg-[#1a1a1a] border border-[#333] rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#D4AF37]"
               />
             </div>
@@ -245,23 +324,55 @@ export function AdminScreen() {
                 className="w-full bg-[#1a1a1a] border border-[#333] rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#D4AF37]"
               />
             </div>
-            <div>
-              <label className="block text-sm text-[#a1a1aa] mb-2">Часы работы</label>
-              <input
-                type="text"
-                value={infoForm.workingHours}
-                onChange={(e) => setInfoForm({ ...infoForm, workingHours: e.target.value })}
-                className="w-full bg-[#1a1a1a] border border-[#333] rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#D4AF37]"
-              />
-            </div>
-            <div>
-              <label className="block text-sm text-[#a1a1aa] mb-2">Координаты (широта,долгота)</label>
-              <input
-                type="text"
-                value={infoForm.coords}
-                onChange={(e) => setInfoForm({ ...infoForm, coords: e.target.value })}
-                className="w-full bg-[#1a1a1a] border border-[#333] rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#D4AF37]"
-              />
+            
+            {/* Working hours section */}
+            <div className="pt-4 border-t border-[#333]">
+              <div className="flex items-center gap-3 mb-4">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={infoForm.sameHoursAllDays}
+                    onChange={(e) => setInfoForm({ ...infoForm, sameHoursAllDays: e.target.checked })}
+                    className="w-5 h-5 rounded border-[#333] bg-[#1a1a1a] text-[#D4AF37] focus:ring-[#D4AF37] focus:ring-offset-0"
+                  />
+                  <span className="text-white text-sm">Одинаковые часы работы все дни недели</span>
+                </label>
+              </div>
+              
+              {infoForm.sameHoursAllDays ? (
+                <div>
+                  <label className="block text-sm text-[#a1a1aa] mb-2">Часы работы</label>
+                  <input
+                    type="text"
+                    value={infoForm.workingHours}
+                    onChange={(e) => setInfoForm({ ...infoForm, workingHours: e.target.value })}
+                    placeholder="12:00 - 23:00"
+                    className="w-full bg-[#1a1a1a] border border-[#333] rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#D4AF37]"
+                  />
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <label className="block text-sm text-[#a1a1aa] mb-2">Часы работы по дням</label>
+                  {Object.entries(WEEKDAY_NAMES).map(([key, name]) => (
+                    <div key={key} className="flex items-center gap-3">
+                      <span className="w-28 text-sm text-[#a1a1aa]">{name}</span>
+                      <input
+                        type="text"
+                        value={infoForm.weekdayHours[key as keyof typeof infoForm.weekdayHours]}
+                        onChange={(e) => setInfoForm({ 
+                          ...infoForm, 
+                          weekdayHours: { 
+                            ...infoForm.weekdayHours, 
+                            [key]: e.target.value 
+                          } 
+                        })}
+                        placeholder="12:00 - 23:00"
+                        className="flex-1 bg-[#1a1a1a] border border-[#333] rounded-xl px-4 py-2 text-white text-sm focus:outline-none focus:border-[#D4AF37]"
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
@@ -519,14 +630,21 @@ export function AdminScreen() {
         </div>
       </div>
 
-      {/* Edit Info Button */}
-      <div className="max-w-2xl mx-auto px-4 py-4">
+      {/* Action Buttons */}
+      <div className="max-w-2xl mx-auto px-4 py-4 space-y-3">
         <button
           onClick={handleEditInfo}
           className="w-full bg-[#D4AF37] text-black py-3 rounded-xl font-semibold flex items-center justify-center gap-2"
         >
           <Edit3 className="w-4 h-4" />
           Редактировать информацию
+        </button>
+        <button
+          onClick={() => setEditMode('admins')}
+          className="w-full bg-[#1a1a1a] border border-[#333] text-white py-3 rounded-xl font-semibold flex items-center justify-center gap-2 hover:border-[#D4AF37] transition-colors"
+        >
+          <Users className="w-4 h-4" />
+          Редактировать администраторов
         </button>
       </div>
 
@@ -535,11 +653,13 @@ export function AdminScreen() {
         {groupedItems.map((group) => (
           <div key={group.category.id} className="mb-4">
             {/* Category Header */}
-            <div className="flex items-center justify-between bg-[#1a1a1a] rounded-xl px-4 py-3 mb-2">
-              <div className="flex items-center gap-3">
-                <GripVertical className="w-5 h-5 text-[#666] cursor-grab" />
-                <span className="font-semibold text-white">{group.category.name}</span>
-              </div>
+            <div 
+              className="flex items-center justify-between bg-[#1a1a1a] rounded-xl px-4 py-3 mb-2"
+              draggable
+              onDragStart={() => handleDragStart('category', group.category.id)}
+              onDragEnd={handleDragEnd}
+            >
+              <span className="font-semibold text-white">{group.category.name}</span>
               <div className="flex items-center gap-2">
                 <div className="relative">
                   <button
@@ -574,7 +694,9 @@ export function AdminScreen() {
                     )}
                   </AnimatePresence>
                 </div>
-                <GripVertical className="w-5 h-5 text-[#666] cursor-grab" />
+                <div className="w-8 h-8 flex items-center justify-center text-[#666] cursor-grab active:cursor-grabbing">
+                  <Equal className="w-5 h-5" />
+                </div>
               </div>
             </div>
 
@@ -582,18 +704,18 @@ export function AdminScreen() {
             {group.items.map((item) => (
               <div
                 key={item.id}
+                draggable
+                onDragStart={() => handleDragStart('item', item.id)}
+                onDragEnd={handleDragEnd}
                 className={`flex items-center justify-between bg-[#FFF8E7] rounded-xl px-4 py-3 mb-2 ${
                   stoppedItems.has(item.id) ? 'opacity-50' : ''
                 }`}
               >
-                <div className="flex items-center gap-3 flex-1">
-                  <GripVertical className="w-5 h-5 text-[#999] cursor-grab" />
-                  <div className="flex-1">
-                    <span className="font-medium text-black">{item.name}</span>
-                    {stoppedItems.has(item.id) && (
-                      <span className="ml-2 text-xs bg-red-500/20 text-red-600 px-2 py-0.5 rounded">СТОП</span>
-                    )}
-                  </div>
+                <div className="flex-1">
+                  <span className="font-medium text-black">{item.name}</span>
+                  {stoppedItems.has(item.id) && (
+                    <span className="ml-2 text-xs bg-red-500/20 text-red-600 px-2 py-0.5 rounded">СТОП</span>
+                  )}
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-black font-semibold">{item.price} P</span>
@@ -640,7 +762,9 @@ export function AdminScreen() {
                       )}
                     </AnimatePresence>
                   </div>
-                  <GripVertical className="w-5 h-5 text-[#999] cursor-grab" />
+                  <div className="w-8 h-8 flex items-center justify-center text-[#999] cursor-grab active:cursor-grabbing">
+                    <Equal className="w-5 h-5" />
+                  </div>
                 </div>
               </div>
             ))}

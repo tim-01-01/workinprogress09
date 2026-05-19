@@ -16,7 +16,7 @@ import { TermsScreen } from '@/components/screens/terms'
 import { AdminScreen } from '@/components/screens/admin'
 
 function AppContent() {
-  const { currentScreen, setCurrentScreen, setIsAdmin, isAuthenticated } = useApp()
+  const { currentScreen, setCurrentScreen, setIsAdmin, isAuthenticated, isAdminUser } = useApp()
 
   const handleAdminClick = () => {
     setIsAdmin(true)
@@ -48,8 +48,8 @@ function AppContent() {
           </motion.div>
         </AnimatePresence>
 
-        {/* Admin Button - Floating gear icon in bottom left */}
-        {isAuthenticated && currentScreen !== 'admin' && (
+        {/* Admin Button - Floating gear icon in bottom left, only for admin users */}
+        {isAuthenticated && isAdminUser() && currentScreen !== 'admin' && (
           <motion.button
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}

@@ -42,10 +42,14 @@ interface AppContextType {
   addToOrderHistory: (order: HistoryOrder) => void
   isAdmin: boolean
   setIsAdmin: (value: boolean) => void
+  adminPhones: string[]
+  addAdminPhone: (phone: string) => void
+  removeAdminPhone: (phone: string) => void
+  isAdminUser: () => boolean
 }
 
 // Restaurant constants
-export const RESTAURANT_PHONE = '+7(900)110-20-03'
+export const RESTAURANT_PHONE = '+7(900) 110-20-03'
 export const RESTAURANT_ADDRESS = 'Большой проспект П.С., 39'
 export const RESTAURANT_COORDS = '59.960275,30.303612' // St. Petersburg coordinates
 
@@ -60,10 +64,26 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [userProfile, setUserProfile] = useState<UserProfile>({ name: '', birthday: '', email: '' })
   const [orderHistory, setOrderHistory] = useState<HistoryOrder[]>([])
   const [isAdmin, setIsAdmin] = useState(false)
+  // Default admin phone - can be extended via admin panel
+  const [adminPhones, setAdminPhones] = useState<string[]>(['+7 (999) 999-99-99'])
 
   const addToOrderHistory = useCallback((order: HistoryOrder) => {
     setOrderHistory(prev => [order, ...prev])
   }, [])
+
+  const addAdminPhone = useCallback((newPhone: string) => {
+    setAdminPhones(prev => prev.includes(newPhone) ? prev : [...prev, newPhone])
+  }, [])
+
+  const removeAdminPhone = useCallback((phoneToRemove: string) => {
+    // Don't allow removing the default admin phone
+    if (phoneToRemove === '+7 (999) 999-99-99') return
+    setAdminPhones(prev => prev.filter(p => p !== phoneToRemove))
+  }, [])
+
+  const isAdminUser = useCallback(() => {
+    return adminPhones.includes(phone)
+  }, [adminPhones, phone])
 
   return (
     <AppContext.Provider
@@ -84,6 +104,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
         addToOrderHistory,
         isAdmin,
         setIsAdmin,
+        adminPhones,
+        addAdminPhone,
+        removeAdminPhone,
+        isAdminUser,
       }}
     >
       {children}

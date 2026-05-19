@@ -8,6 +8,16 @@ export interface RestaurantInfo {
   phone: string
   address: string
   workingHours: string
+  sameHoursAllDays: boolean
+  weekdayHours: {
+    mon: string
+    tue: string
+    wed: string
+    thu: string
+    fri: string
+    sat: string
+    sun: string
+  }
   coords: string
 }
 
@@ -40,9 +50,19 @@ export function MenuProvider({ children }: { children: ReactNode }) {
   const [stoppedItems, setStoppedItems] = useState<Set<string>>(new Set())
   const [restaurantInfo, setRestaurantInfo] = useState<RestaurantInfo>({
     name: 'MUCHACHO',
-    phone: '+7(900)110-20-03',
+    phone: '+7(900) 110-20-03',
     address: 'Большой проспект П.С., 39',
     workingHours: '12:00 - 23:00',
+    sameHoursAllDays: true,
+    weekdayHours: {
+      mon: '12:00 - 23:00',
+      tue: '12:00 - 23:00',
+      wed: '12:00 - 23:00',
+      thu: '12:00 - 23:00',
+      fri: '12:00 - 23:00',
+      sat: '12:00 - 23:00',
+      sun: '12:00 - 23:00'
+    },
     coords: '59.960275,30.303612'
   })
 
